@@ -9,19 +9,24 @@ import (
 	"strings"
 )
 
-var (
-	lowercase = "abcdefghijklmnopqrstuvwxyz"
-	uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	digits    = "0123456789"
-	symbols   = "!@#$%^&*()-_=+[]{};:,.<>?/|\\"
-)
-
 type PasswordOptions struct {
 	LowerCase bool
 	UpperCase bool
 	Digits    bool
 	Symbols   bool
 }
+
+type PasswordConfig struct {
+	Length  int
+	Options PasswordOptions
+}
+
+var (
+	lowercase = "abcdefghijklmnopqrstuvwxyz"
+	uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	digits    = "0123456789"
+	symbols   = "!@#$%^&*()-_=+[]{};:,.<>?/|\\"
+)
 
 var defaultOptions = PasswordOptions{
 	LowerCase: true,
@@ -30,9 +35,17 @@ var defaultOptions = PasswordOptions{
 	Symbols:   false,
 }
 
-type PasswordConfig struct {
-	Length  int
-	Options PasswordOptions
+func printMenu(options PasswordOptions, length int) {
+	fmt.Println("====== Password Generator ======")
+	fmt.Printf("[1] Toggle lowercase  [%t]\n", options.LowerCase)
+	fmt.Printf("[2] Toggle uppercase  [%t]\n", options.UpperCase)
+	fmt.Printf("[3] Toggle digits     [%t]\n", options.Digits)
+	fmt.Printf("[4] Toggle symbols    [%t]\n", options.Symbols)
+	fmt.Printf("[5] Set length        [%d]\n", length)
+	fmt.Println()
+	fmt.Println("[6] Generate password")
+	fmt.Println("================================")
+	fmt.Print("Select an option: ")
 }
 
 func generateCharset(passwordOptions PasswordOptions) (string, error) {
@@ -64,7 +77,7 @@ func generateCharset(passwordOptions PasswordOptions) (string, error) {
 func generatePassword(length int, charset string) string {
 	password := make([]byte, length)
 
-	for i := range length {
+	for i := 0; i < length; i++ {
 		char := charset[rand.Intn(len(charset))]
 
 		password[i] = char
@@ -74,19 +87,13 @@ func generatePassword(length int, charset string) string {
 }
 
 func main() {
-	passwordData := PasswordConfig{
+	passwordConfig := PasswordConfig{
 		Length:  8,
 		Options: defaultOptions,
 	}
 
 	for {
-		fmt.Println(fmt.Sprintf("[1] - toggle lowercase(%t)\n"+
-			"[2] - toggle uppercase(%t)\n"+
-			"[3] - toggle digits(%t)\n"+
-			"[4] - toggle symbols(%t)\n"+
-			"[5] - change length(%d)\n\n"+
-			"[6] - generate password",
-			passwordData.Options.LowerCase, passwordData.Options.UpperCase, passwordData.Options.Digits, passwordData.Options.Symbols, passwordData.Length))
+		printMenu(passwordConfig.Options, passwordConfig.Length)
 
 		stdinReader := bufio.NewReader(os.Stdin)
 		userInput, err := stdinReader.ReadString('\n')
@@ -99,17 +106,16 @@ func main() {
 
 		switch userInput {
 		case "1":
-			passwordData.Options.LowerCase = !passwordData.Options.LowerCase
+			passwordConfig.Options.LowerCase = !passwordConfig.Options.LowerCase
 		case "2":
-			passwordData.Options.UpperCase = !passwordData.Options.UpperCase
+			passwordConfig.Options.UpperCase = !passwordConfig.Options.UpperCase
 		case "3":
-			passwordData.Options.Digits = !passwordData.Options.Digits
+			passwordConfig.Options.Digits = !passwordConfig.Options.Digits
 		case "4":
-			passwordData.Options.Symbols = !passwordData.Options.Symbols
+			passwordConfig.Options.Symbols = !passwordConfig.Options.Symbols
 		case "5":
 			fmt.Println("Input password's length")
 
-			stdinReader = bufio.NewReader(os.Stdin)
 			userInput, _ = stdinReader.ReadString('\n')
 
 			userPasswordLength, err := strconv.Atoi(strings.TrimSpace(userInput))
@@ -118,15 +124,15 @@ func main() {
 				return
 			}
 
-			passwordData.Length = userPasswordLength
+			passwordConfig.Length = userPasswordLength
 		case "6":
-			charset, err := generateCharset(passwordData.Options)
+			charset, err := generateCharset(passwordConfig.Options)
 			if err != nil {
 				fmt.Println("Error with charset:", err)
 				continue
 			}
 
-			fmt.Println("Generated password: " + generatePassword(passwordData.Length, charset))
+			fmt.Printf("Generated password: %s\n", generatePassword(passwordConfig.Length, charset))
 			return
 		default:
 			fmt.Println("Unusual command")
