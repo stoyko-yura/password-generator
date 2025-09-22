@@ -133,6 +133,10 @@ func main() {
 			}
 
 			fmt.Printf("Generated password: %s\n", generatePassword(passwordConfig.Length, charset))
+
+			fmt.Println("\nPress Enter to exit...")
+			bufio.NewReader(os.Stdin).ReadBytes('\n')
+
 			return
 		default:
 			fmt.Println("Unusual command")
